@@ -20,6 +20,7 @@ inputForm.addEventListener('submit', onSubmit);
 
 function onSubmit(e) {
     e.preventDefault();
+    if (searchQuery.value.length <= 0) { return };
     clear(gallery);
     searchQueryText = searchQuery.value;
     
@@ -50,7 +51,7 @@ function onSubmit(e) {
 async function axiosPicture(text, page) {
     try {
         const response = await axios.get(`https://pixabay.com/api/?key=25722602-ef4054fc4542d7cb871df6c01&q=${text}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=${perPage}`);
-        console.log(response);
+        // console.log(response);
         return response.data;
     }
      catch (error) {
@@ -92,7 +93,7 @@ loadBtn.addEventListener(
     axiosPicture(searchQueryText, page).then(name => {
       let totalPages = Math.ceil(name.totalHits / perPage);
       renderGallery(name);
-      lightbox().refresh();
+      lightbox();
 
       if (page >= totalPages) {
         loadBtn.style.display = 'none';
