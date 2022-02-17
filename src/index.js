@@ -3,8 +3,6 @@ import axios from 'axios';
 import Notiflix from 'notiflix';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css'
-// import debounce from 'lodash.debounce';
-// import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 const inputForm = document.querySelector('.search-form');
 const gallery = document.querySelector('.gallery');
@@ -12,6 +10,7 @@ const loadBtn = document.querySelector('.load-more');
 let { searchQuery } = inputForm.elements;
 const clear = elems => [...elems.children].forEach(div => div.remove());
 const lightbox = () => new SimpleLightbox('.gallery a', {});
+let searchQueryText = '';
 let perPage = 40;
 let page = 0;
 
@@ -19,12 +18,10 @@ loadBtn.style.display = 'none';
 
 inputForm.addEventListener('submit', onSubmit);
 
-// refs.inputCantry.addEventListener('input', debounce(onInputFind, DEBOUNCE_DELAY));
-
 function onSubmit(e) {
     e.preventDefault();
     clear(gallery);
-    const searchQueryText = searchQuery.value;
+    searchQueryText = searchQuery.value;
     
     axiosPicture(searchQueryText).then((name => {
         if (name.hits.length > 0) {
@@ -34,6 +31,7 @@ function onSubmit(e) {
             lightbox();
             if (page < totalPages) {
                 loadBtn.style.display = 'block';
+                page += 1;
             } else {
                 loadBtn.style.display = 'none';
                 console.log('There are no more images');
@@ -43,7 +41,7 @@ function onSubmit(e) {
             Notiflix.Notify.failure(
                 'Sorry, there are no images matching your search query. Please try again.',
             );
-            clear(gallery); //reset view in case of failure
+            clear(gallery);
         }
     }))
         .catch(error => console.log(error));
@@ -86,40 +84,22 @@ function renderGallery(name) {
     .join('');
   gallery.insertAdjacentHTML('beforeend', markup);
 }
-// function fetchCountries(text) {
-//     return fetch(`https://pixabay.com/api/?key=25722602-ef4054fc4542d7cb871df6c01&q=${text}&image_type=photo&orientation=orientation&safesearch=true`)
-//            .then((response) => {
-//             if (!response.ok) {
-//             throw new Error(response.status);
-//     }
-//             return response.json();
-//         })
-// }
 
-// function renderCantryList(cantry) {
-//     if (cantry.length > 10) {
-//         Notify.info(`Too many matches found. Please enter a more specific name.`);
-//         return
-//     }
-//     const markupCantryList = cantry.map((item) => {
-//         return `<li style=" display: flex"; margin-down: 5px>
-//         <img  width="30" height="30" style="margin-right: 10px" src="${item.flags.svg}" />
-//         <p style="font-size: 24px">${item.name.official}</p>
-//         </li>`}).join("");
-//         CountryList(markupCantryList);
-    
-//     if (cantry.length === 1) {
-//          const markupCantryInfo = cantry.map((item) => {
-//         return `
-//         <p style="font-size: 24px"><b>Capital:  </b>${item.capital}</p>
-//         <p style="font-size: 24px"><b>Population:  </b>${item.population}</p>
-//         <p style="font-size: 24px"><b>Languages:  </b>${Object.values(item.languages)}</p>
-//         `}).join("");
-//         CountryInfo(markupCantryInfo); 
-//     }
-// }
-// function template(text) { }
+loadBtn.addEventListener(
+  'click',
+  () => {
+    page += 1;
+    axiosPicture(searchQueryText, page).then(name => {
+      let totalPages = Math.ceil(name.totalHits / perPage);
+      renderGallery(name);
+      lightbox().refresh();
 
-
-// function CountryList(list) {refs.cantryList.innerHTML = list;}
-// function CountryInfo(info) {refs.cantryInfo.innerHTML = info;}
+      if (page >= totalPages) {
+        loadBtn.style.display = 'none';
+        console.log('There are no more images');
+        Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
+      }
+    });
+  },
+  true,
+);
